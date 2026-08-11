@@ -23,7 +23,7 @@ class DuckDBClient:
         
         conn.execute(query)
         conn.close()
-        print(f"[OK] DataFrame başarıyla '{table_name}' tablosuna kaydedildi ({len(df)} satır).")
+        print(f"[OK] DataFrame basariyla '{table_name}' tablosuna kaydedildi ({len(df)} satir).")
 
     def execute_query(self, query: str) -> pd.DataFrame:
         """Verilen SQL sorgusunu çalıştırır ve sonucu Pandas DataFrame olarak döner."""

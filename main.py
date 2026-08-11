@@ -1,7 +1,7 @@
 from src.infrastructure.data_loaders.csv_loader import CSVDataLoader
-from src.application.data_inspector import DataInspector
+from src.adapters.presenters.data_inspector import DataInspector
 from src.infrastructure.db.duckdb_client import DuckDBClient
-from src.application.etl_service import ETLService
+from src.use_cases.etl_pipeline import ETLService
 
 def main():
     path = "data/raw/Aquaculture_Trade_Filtered.csv"
@@ -18,7 +18,7 @@ def main():
     db_client.save_dataframe(df_transformed, "fact_trade")
 
     count_df = db_client.execute_query("SELECT COUNT(*) AS total_rows FROM fact_trade")
-    print("\nDuckDB 'fact_trade' Tablosundaki Toplam Satır Sayısı:")
+    print("\nDuckDB 'fact_trade' Tablosundaki Toplam Satir Sayisi:")
     print(count_df)
 
 if __name__ == "__main__":
