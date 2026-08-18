@@ -1,0 +1,40 @@
+{
+  "run_id": "run_20260818_103055_b58508",
+  "experiment_name": "Aquaculture_Trade_Full_Pipeline",
+  "start_time": "2026-08-18T10:30:55.471200",
+  "end_time": "2026-08-18T10:30:56.549845",
+  "status": "FAILED: 'charmap' codec can't encode character '\\U0001f50d' in position 0: character maps to <undefined>",
+  "tags": {
+    "mode": "autopilot",
+    "version": "1.0.0"
+  },
+  "parameters": {
+    "forecast_horizon": 12,
+    "top_n_commodities": 5
+  },
+  "metrics": {},
+  "dataset_info": {
+    "name": "transformed_fact_trade",
+    "shape": [
+      82216,
+      13
+    ],
+    "columns": [
+      "date",
+      "GEOGRAPHY_CODE",
+      "GEOGRAPHY_DESC",
+      "HS_CODE",
+      "COMMODITY_DESC",
+      "export_qty",
+      "export_vlu",
+      "import_qty",
+      "import_vlu",
+      "import_unit_price",
+      "export_unit_price",
+      "trade_balance_vlu",
+      "trade_balance_qty"
+    ],
+    "sample_hash": "0e86b4b45617d3b4bcd24d93a5f5f084"
+  },
+  "artifacts": []
+}

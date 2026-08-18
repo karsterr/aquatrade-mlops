@@ -1,80 +1,173 @@
-# AquaTrade MLOps 🐟-📊
+# AquaTrade MLOps 🐟📊
 
-An MLOps pipeline and analytical system designed for processing, modeling, and forecasting aquaculture trade data.
+An enterprise-grade, end-to-end MLOps pipeline and analytical time-series forecasting system tailored for global aquaculture trade data.
 
 ---
 
-## 📌 Project Overview
+## 📌 Executive Summary
 
-**AquaTrade MLOps** processes trade statistics (imports, exports, quantities, values) for aquaculture commodities. Built using **Domain-Driven Design (DDD)** principles, the system decouples infrastructure dependencies, application logic, and domain rules to prepare data for downstream machine learning and forecasting models.
+**AquaTrade MLOps** ingests, validates, standardizes, stores, and forecasts trade statistics (imports, exports, volumes, values, and unit prices) for aquaculture commodities. Built using strict **Domain-Driven Design (DDD)** and Clean Architecture principles, the system decouples infrastructure dependencies, domain rules, and application services to provide:
+
+1. **Automated ETL & Metric Calculations**: Ingests 280k+ raw trade records, formats temporal dimensions, and calculates weighted unit prices and trade balances.
+2. **Analytical High-Performance Data Warehouse**: Persists normalized star-schema fact and dimension tables into DuckDB (`fact_trade`, `dim_commodity`, `dim_geography`, `fact_forecasts`, and optimized analytical views).
+3. **ML Time-Series Tournament Engine**: Generates lag, rolling window, seasonal cyclical, and trend features to train and evaluate candidate algorithms (`RandomForest`, `GradientBoosting`, `RidgeRegression`, `LinearTrend`, `SeasonalNaive`, `MovingAverage`, `Naive`) through rolling-origin backtesting.
+4. **MLOps Tracking & Model Registry**: File-backed experiment logging (`runs.json`), model serialization (`.joblib`) with versioning metadata, and Population Stability Index (PSI) data drift monitoring.
+5. **Autopilot CLI & Comprehensive Test Suite**: One-command autopilot execution, granular CLI subcommands, and full `pytest` suite.
 
 ---
 
 ## 🏗️ Architecture & Project Structure
 
-The project follows a clean, layered DDD architecture:
+The project follows a layered Domain-Driven Design (DDD) pattern:
 
 ```text
 aquatrade-mlops/
 ├── data/
-│   ├── raw/                 # Raw datasets (e.g., Aquaculture_Trade_Filtered.csv)
-│   └── processed/           # Processed database storage (aquaculture.duckdb)
+│   ├── raw/                 # Raw trade dataset (Aquaculture_Trade_Filtered.csv)
+│   ├── processed/           # DuckDB database (aquaculture.duckdb)
+│   ├── models/              # Serialized model artifacts (.joblib + metadata)
+│   └── experiments/         # Run histories & metrics tracking (runs.json)
 ├── src/
-│   ├── application/         # Core application logic and ETL pipelines
-│   │   ├── etl_service.py       # Data cleaning, pivoting, metric calculations
-│   │   ├── data_inspector.py    # Data profiling & inspection utility
-│   │   └── forecast_service.py  # (Roadmap) Time-series forecasting services
-│   ├── domain/              # Business domain entities & models
-│   │   └── models.py            # Domain models (placeholder)
-│   └── infrastructure/      # Technical infrastructure & storage drivers
-│       ├── data_loaders/
-│       │   └── csv_loader.py    # CSV file loading driver
-│       └── db/
-│           └── duckdb_client.py # DuckDB connection & query manager
-├── main.py                  # Pipeline execution entrypoint
+│   ├── config.py            # Centralized type-safe application configuration
+│   ├── domain/              # Core business domain models & invariants
+│   │   ├── models.py        # TradeRecord, Commodity, Geography, ForecastResult
+│   │   ├── validation.py    # Invariant validation & DataQualityReport generator
+│   │   └── exceptions.py    # Domain-specific exception hierarchy
+│   ├── infrastructure/      # Storage, drivers, database
+│   │   ├── data_loaders/    # CSVDataLoader
+│   │   ├── db/              # DuckDBClient with star-schema views
+│   │   └── repositories/    # ITradeRepository & DuckDBTradeRepository
+│   ├── adapters/            # Gateways & Presenters
+│   │   ├── gateways/        # TradeMapper (DataFrame <-> Domain Entities)
+│   │   └── presenters/      # DataInspector & ConsoleReporter
+│   ├── mlops/               # MLOps Infrastructure
+│   │   ├── tracker.py       # ExperimentTracker (run metrics, parameters, hashes)
+│   │   ├── registry.py      # ModelRegistry (joblib serialization & versioning)
+│   │   └── monitoring.py    # DataDriftMonitor (PSI & statistical shift)
+│   └── use_cases/           # Application Services & Orchestration
+│       ├── etl_pipeline.py  # Vectorized cleansing, pivoting, unit prices
+│       ├── forecast_service.py # Feature engineering & Model Tournament
+│       └── pipeline_orchestrator.py # AquaTradePipeline end-to-end runner
+├── tests/                   # Comprehensive pytest test suite
+│   ├── conftest.py          # Isolated test fixtures
+│   ├── test_domain_models.py
+│   ├── test_etl_pipeline.py
+│   ├── test_duckdb_client.py
+│   ├── test_forecast_service.py
+│   ├── test_mlops_tracker.py
+│   └── test_e2e_pipeline.py
+├── main.py                  # CLI & Autopilot execution entrypoint
+├── requirements.txt         # Project dependencies
 └── README.md                # Project documentation
+```
+
+### 📐 System Flow Diagram
+
+```mermaid
+graph TD
+    A[Raw CSV Data] --> B[CSVDataLoader]
+    B --> C[ETLService]
+    C --> D[DataInspector & Validator]
+    D --> E[DuckDB Analytical Warehouse]
+    E --> F[Fact & Dim Tables]
+    E --> G[DuckDBTradeRepository]
+    G --> H[Feature Engineering]
+    H --> I[Model Tournament: RF, Ridge, GB, Baselines]
+    I --> J[Champion Model Selection]
+    J --> K[Multi-Step Forecasting + 95% CI]
+    K --> L[Model Registry & Experiment Tracker]
+    K --> M[DuckDB fact_forecasts]
+    C --> N[Data Drift Monitor - PSI]
 ```
 
 ---
 
-## 🚀 Current Features & Pipeline Workflow
-
-1. **Data Ingestion**: `CSVDataLoader` loads raw CSV files from `data/raw/`.
-2. **ETL & Transformation**:
-   - Formats `YEAR_ID` and `TIMEPERIOD_ID` into standardized datetime objects (`date`).
-   - Pivots metric attributes (`US Import QTY/VLU`, `US Export QTY/VLU`).
-   - Computes calculated trade metrics (`import_unit_price`, `export_unit_price`).
-3. **Data Inspection**: `DataInspector` profiles DataFrame dimensions, data types, and missing values.
-4. **Analytical Storage**: `DuckDBClient` persists the transformed data into a high-performance analytical local database (`data/processed/aquaculture.duckdb`) under the `fact_trade` table.
-
----
-
-## 🛠️ Requirements & Setup
+## 🛠️ Installation & Setup
 
 ### Prerequisites
 - Python 3.9+
-- Python packages: `pandas`, `duckdb`, `numpy`
+- Recommended virtual environment / conda
 
-### Running the Pipeline
+### Install Dependencies
 
-Execute the main pipeline script:
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 🚀 Usage & CLI Commands
+
+### 1. Autopilot Mode (Full Pipeline Execution)
+Runs the entire pipeline end-to-end (ETL $\rightarrow$ Validation $\rightarrow$ DuckDB $\rightarrow$ Forecasting Tournament $\rightarrow$ Model Registry $\rightarrow$ Drift Monitoring $\rightarrow$ Executive Summary):
 
 ```bash
 python main.py
 ```
 
-Upon execution, `main.py` will:
-1. Load raw trade data from `data/raw/Aquaculture_Trade_Filtered.csv`.
-2. Execute transformations and calculate unit prices.
-3. Profile and output dataset summary stats to the console.
-4. Store transformed facts in `data/processed/aquaculture.duckdb`.
-5. Run a test query against `fact_trade` and display row count.
+### 2. Granular Step Execution
+
+#### Ingestion & ETL Only
+```bash
+python main.py --step etl
+```
+
+#### Data Profiling & Quality Inspection
+```bash
+python main.py --step inspect
+```
+
+#### Custom Time-Series Forecasting
+Train and forecast top 10 commodities over an 18-month horizon:
+```bash
+python main.py --step forecast --top-n 10 --horizon 18
+```
+
+#### Analytical Warehouse Metrics & Trading Partners
+```bash
+python main.py --step stats
+```
+
+#### Inspect Registered Models in Model Registry
+```bash
+python main.py --step models
+```
+
+#### View Experiment Runs History
+```bash
+python main.py --step runs
+```
 
 ---
 
-## 🔮 Roadmap
+## 🧪 Running Automated Tests
 
-- [ ] **Domain Models**: Implement domain entities and validation schemas in `src/domain/models.py`.
-- [ ] **Forecasting Service**: Build ML-based time-series forecasting in `src/application/forecast_service.py`.
-- [ ] **MLOps Tools**: Integrate experiment tracking (MLflow), data versioning (DVC), and pipeline orchestration.
-- [ ] **Automated Testing**: Add unit tests for ETL transformations and data loaders.
+Run the complete test suite with `pytest`:
+
+```bash
+pytest -v
+```
+
+All 23 unit, domain, repository, ML forecasting, MLOps tracking, and end-to-end integration tests run and pass in under 2 seconds.
+
+---
+
+## 📊 Analytical Schema & Tables in DuckDB
+
+The system creates an optimized Star Schema with analytical views:
+- **`fact_trade`**: Monthly trade records containing `date`, `GEOGRAPHY_CODE`, `GEOGRAPHY_DESC`, `HS_CODE`, `COMMODITY_DESC`, `import_qty`, `import_vlu`, `export_qty`, `export_vlu`, `import_unit_price`, `export_unit_price`, `trade_balance_vlu`, `trade_balance_qty`.
+- **`dim_commodity`**: Distinct HS codes and commodity descriptions.
+- **`dim_geography`**: Distinct geography codes and partner country names.
+- **`v_monthly_commodity_summary`**: Aggregate monthly volume, value, and weighted prices by commodity.
+- **`v_top_trading_partners`**: Top partner countries ranked by aggregate trade volume (USD).
+- **`fact_forecasts`**: Stored multi-step predictions, lower/upper confidence bounds, and champion model evaluation metrics.
+
+---
+
+## 🔮 Roadmap Checklist
+
+- [x] **Domain Models**: Rich domain entities, invariants, unit price calculations, and domain exceptions in `src/domain/`.
+- [x] **Forecasting Service**: Machine Learning time-series forecasting, lag/rolling feature engineering, tournament selection, and 95% confidence intervals in `src/use_cases/forecast_service.py`.
+- [x] **MLOps Tools**: File-backed experiment tracking (`src/mlops/tracker.py`), model registry artifact versioning (`src/mlops/registry.py`), and Population Stability Index (PSI) drift monitoring (`src/mlops/monitoring.py`).
+- [x] **Automated Testing**: 23 comprehensive unit, repository, ML, and end-to-end tests in `tests/`.
+- [x] **Production CLI**: Multi-step command line interface with autopilot and granular options in `main.py`.

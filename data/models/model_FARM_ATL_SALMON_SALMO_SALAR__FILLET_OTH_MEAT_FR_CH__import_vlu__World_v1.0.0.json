@@ -1,0 +1,19 @@
+{
+  "series_id": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH__import_vlu__World",
+  "commodity_desc": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH",
+  "target_metric": "import_vlu",
+  "champion_model_name": "LinearTrend",
+  "version": "v1.0.0",
+  "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_FARM_ATL_SALMON_SALMO_SALAR__FILLET_OTH_MEAT_FR_CH__import_vlu__World_v1.0.0.joblib",
+  "metrics": {
+    "model_name": "LinearTrend",
+    "mae": 3168231.343,
+    "rmse": 4126243.469,
+    "mape": 0.0647,
+    "wape": 0.0661,
+    "r2": 0.3812,
+    "test_samples": 24
+  },
+  "feature_columns": [],
+  "registered_at": "2026-08-18T11:11:56.509506"
+}

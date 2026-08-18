@@ -1,0 +1,19 @@
+{
+  "series_id": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED__import_vlu__World",
+  "commodity_desc": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED",
+  "target_metric": "import_vlu",
+  "champion_model_name": "SeasonalNaive",
+  "version": "v1.0.0",
+  "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_ATLANTIC_SALMON_FILLETS_ETC__FARMED__FRESH_CHILLED__import_vlu__World_v1.0.0.joblib",
+  "metrics": {
+    "model_name": "SeasonalNaive",
+    "mae": 4781412.417,
+    "rmse": 5940934.491,
+    "mape": 0.0899,
+    "wape": 0.0917,
+    "r2": 0.3496,
+    "test_samples": 24
+  },
+  "feature_columns": [],
+  "registered_at": "2026-08-18T11:11:56.767104"
+}

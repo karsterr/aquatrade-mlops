@@ -1,0 +1,19 @@
+{
+  "series_id": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN__import_vlu__World",
+  "commodity_desc": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN",
+  "target_metric": "import_vlu",
+  "champion_model_name": "MovingAverage",
+  "version": "v1.0.0",
+  "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_SOCKEYE__RED__SALMON__EX_FILLET_LIVER_ROE__FROZEN__import_vlu__World_v1.0.0.joblib",
+  "metrics": {
+    "model_name": "MovingAverage",
+    "mae": 45689.5,
+    "rmse": 72094.428,
+    "mape": 4730.098,
+    "wape": 0.8913,
+    "r2": -0.1862,
+    "test_samples": 24
+  },
+  "feature_columns": [],
+  "registered_at": "2026-08-18T11:11:57.194165"
+}

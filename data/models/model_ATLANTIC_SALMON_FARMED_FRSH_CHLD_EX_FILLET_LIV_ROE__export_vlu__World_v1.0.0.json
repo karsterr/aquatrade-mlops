@@ -1,0 +1,19 @@
+{
+  "series_id": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE__export_vlu__World",
+  "commodity_desc": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE",
+  "target_metric": "export_vlu",
+  "champion_model_name": "RandomForest",
+  "version": "v1.0.0",
+  "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_ATLANTIC_SALMON_FARMED_FRSH_CHLD_EX_FILLET_LIV_ROE__export_vlu__World_v1.0.0.joblib",
+  "metrics": {
+    "model_name": "RandomForest",
+    "mae": 1962591.132,
+    "rmse": 2318229.375,
+    "mape": 3.5205,
+    "wape": 0.5456,
+    "r2": 0.3996,
+    "test_samples": 24
+  },
+  "feature_columns": [],
+  "registered_at": "2026-08-18T11:11:55.581658"
+}

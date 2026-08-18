@@ -1,0 +1,19 @@
+{
+  "series_id": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE__import_vlu__World",
+  "commodity_desc": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE",
+  "target_metric": "import_vlu",
+  "champion_model_name": "RidgeRegression",
+  "version": "v1.0.0",
+  "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_ATLANTIC_SALMON_FARMED_FRSH_CHLD_EX_FILLET_LIV_ROE__import_vlu__World_v1.0.0.joblib",
+  "metrics": {
+    "model_name": "RidgeRegression",
+    "mae": 3595592.838,
+    "rmse": 4749056.361,
+    "mape": 0.0752,
+    "wape": 0.076,
+    "r2": -0.1242,
+    "test_samples": 24
+  },
+  "feature_columns": [],
+  "registered_at": "2026-08-18T11:11:55.874423"
+}

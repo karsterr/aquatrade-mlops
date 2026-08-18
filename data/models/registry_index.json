@@ -1,0 +1,272 @@
+{
+  "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE__export_vlu__World": {
+    "series_id": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE__export_vlu__World",
+    "commodity_desc": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE",
+    "target_metric": "export_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE__export_vlu__World",
+        "commodity_desc": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE",
+        "target_metric": "export_vlu",
+        "champion_model_name": "RandomForest",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_ATLANTIC_SALMON_FARMED_FRSH_CHLD_EX_FILLET_LIV_ROE__export_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "RandomForest",
+          "mae": 1962591.132,
+          "rmse": 2318229.375,
+          "mape": 3.5205,
+          "wape": 0.5456,
+          "r2": 0.3996,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:55.581658"
+      }
+    }
+  },
+  "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE__import_vlu__World": {
+    "series_id": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE__import_vlu__World",
+    "commodity_desc": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE",
+    "target_metric": "import_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE__import_vlu__World",
+        "commodity_desc": "ATLANTIC SALMON FARMED FRSH/CHLD EX FILLET/LIV/ROE",
+        "target_metric": "import_vlu",
+        "champion_model_name": "RidgeRegression",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_ATLANTIC_SALMON_FARMED_FRSH_CHLD_EX_FILLET_LIV_ROE__import_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "RidgeRegression",
+          "mae": 3595592.838,
+          "rmse": 4749056.361,
+          "mape": 0.0752,
+          "wape": 0.076,
+          "r2": -0.1242,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:55.874423"
+      }
+    }
+  },
+  "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED__export_vlu__World": {
+    "series_id": "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED__export_vlu__World",
+    "commodity_desc": "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED",
+    "target_metric": "export_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED__export_vlu__World",
+        "commodity_desc": "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED",
+        "target_metric": "export_vlu",
+        "champion_model_name": "Naive",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_ATLANTIC_SALMON__SALMO_SALAR__FILLETS__NOT_FARMED__FRESH_OR_CHILLED__export_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "Naive",
+          "mae": 0.0,
+          "rmse": 0.0,
+          "mape": 0.0,
+          "wape": 0.0,
+          "r2": 0.0,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:56.001210"
+      }
+    }
+  },
+  "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED__import_vlu__World": {
+    "series_id": "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED__import_vlu__World",
+    "commodity_desc": "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED",
+    "target_metric": "import_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED__import_vlu__World",
+        "commodity_desc": "ATLANTIC SALMON (SALMO SALAR) FILLETS, NOT FARMED, FRESH OR CHILLED",
+        "target_metric": "import_vlu",
+        "champion_model_name": "SeasonalNaive",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_ATLANTIC_SALMON__SALMO_SALAR__FILLETS__NOT_FARMED__FRESH_OR_CHILLED__import_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "SeasonalNaive",
+          "mae": 10383851.5,
+          "rmse": 13598509.571,
+          "mape": 0.1034,
+          "wape": 0.1082,
+          "r2": -0.2447,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:56.135574"
+      }
+    }
+  },
+  "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH__export_vlu__World": {
+    "series_id": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH__export_vlu__World",
+    "commodity_desc": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH",
+    "target_metric": "export_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH__export_vlu__World",
+        "commodity_desc": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH",
+        "target_metric": "export_vlu",
+        "champion_model_name": "Naive",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_FARM_ATL_SALMON_SALMO_SALAR__FILLET_OTH_MEAT_FR_CH__export_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "Naive",
+          "mae": 0.0,
+          "rmse": 0.0,
+          "mape": 0.0,
+          "wape": 0.0,
+          "r2": 0.0,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:56.260641"
+      }
+    }
+  },
+  "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH__import_vlu__World": {
+    "series_id": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH__import_vlu__World",
+    "commodity_desc": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH",
+    "target_metric": "import_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH__import_vlu__World",
+        "commodity_desc": "FARM ATL SALMON(SALMO SALAR) FILLET/OTH MEAT FR/CH",
+        "target_metric": "import_vlu",
+        "champion_model_name": "LinearTrend",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_FARM_ATL_SALMON_SALMO_SALAR__FILLET_OTH_MEAT_FR_CH__import_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "LinearTrend",
+          "mae": 3168231.343,
+          "rmse": 4126243.469,
+          "mape": 0.0647,
+          "wape": 0.0661,
+          "r2": 0.3812,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:56.509506"
+      }
+    }
+  },
+  "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED__export_vlu__World": {
+    "series_id": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED__export_vlu__World",
+    "commodity_desc": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED",
+    "target_metric": "export_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED__export_vlu__World",
+        "commodity_desc": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED",
+        "target_metric": "export_vlu",
+        "champion_model_name": "Naive",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_ATLANTIC_SALMON_FILLETS_ETC__FARMED__FRESH_CHILLED__export_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "Naive",
+          "mae": 0.0,
+          "rmse": 0.0,
+          "mape": 0.0,
+          "wape": 0.0,
+          "r2": 0.0,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:56.633399"
+      }
+    }
+  },
+  "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED__import_vlu__World": {
+    "series_id": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED__import_vlu__World",
+    "commodity_desc": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED",
+    "target_metric": "import_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED__import_vlu__World",
+        "commodity_desc": "ATLANTIC SALMON FILLETS ETC, FARMED, FRESH/CHILLED",
+        "target_metric": "import_vlu",
+        "champion_model_name": "SeasonalNaive",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_ATLANTIC_SALMON_FILLETS_ETC__FARMED__FRESH_CHILLED__import_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "SeasonalNaive",
+          "mae": 4781412.417,
+          "rmse": 5940934.491,
+          "mape": 0.0899,
+          "wape": 0.0917,
+          "r2": 0.3496,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:56.767104"
+      }
+    }
+  },
+  "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN__export_vlu__World": {
+    "series_id": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN__export_vlu__World",
+    "commodity_desc": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN",
+    "target_metric": "export_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN__export_vlu__World",
+        "commodity_desc": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN",
+        "target_metric": "export_vlu",
+        "champion_model_name": "RidgeRegression",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_SOCKEYE__RED__SALMON__EX_FILLET_LIVER_ROE__FROZEN__export_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "RidgeRegression",
+          "mae": 3407837.289,
+          "rmse": 5153269.194,
+          "mape": 0.7785,
+          "wape": 0.2878,
+          "r2": 0.9441,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:57.033112"
+      }
+    }
+  },
+  "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN__import_vlu__World": {
+    "series_id": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN__import_vlu__World",
+    "commodity_desc": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN",
+    "target_metric": "import_vlu",
+    "latest_version": "v1.0.0",
+    "versions": {
+      "v1.0.0": {
+        "series_id": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN__import_vlu__World",
+        "commodity_desc": "SOCKEYE (RED) SALMON, EX FILLET/LIVER/ROE, FROZEN",
+        "target_metric": "import_vlu",
+        "champion_model_name": "MovingAverage",
+        "version": "v1.0.0",
+        "artifact_path": "C:\\Users\\Efe Can Kara\\aquatrade-mlops\\data\\models\\model_SOCKEYE__RED__SALMON__EX_FILLET_LIVER_ROE__FROZEN__import_vlu__World_v1.0.0.joblib",
+        "metrics": {
+          "model_name": "MovingAverage",
+          "mae": 45689.5,
+          "rmse": 72094.428,
+          "mape": 4730.098,
+          "wape": 0.8913,
+          "r2": -0.1862,
+          "test_samples": 24
+        },
+        "feature_columns": [],
+        "registered_at": "2026-08-18T11:11:57.194165"
+      }
+    }
+  }
+}
