@@ -35,17 +35,16 @@ class DataDriftMonitor:
 
     @staticmethod
     def calculate_psi(
-        baseline: np.ndarray,
-        target: np.ndarray,
-        num_buckets: int = 10,
-        epsilon: float = 1e-4
+        baseline: np.ndarray, target: np.ndarray, num_buckets: int = 10, epsilon: float = 1e-4
     ) -> float:
         """Calculates Population Stability Index (PSI) between baseline and target distributions."""
-        baseline = baseline[~np.isnan(baseline)]
-        target = target[~np.isnan(target)]
+        baseline = np.asarray(baseline, dtype=float)
+        baseline = baseline[np.isfinite(baseline)]
+        target = np.asarray(target, dtype=float)
+        target = target[np.isfinite(target)]
 
         if len(baseline) < 10 or len(target) < 10:
-            return 0.0
+            raise ValueError("PSI requires at least ten finite observations in each sample.")
 
         # Create quantiles on baseline
         percentiles = np.linspace(0, 100, num_buckets + 1)
@@ -54,8 +53,9 @@ class DataDriftMonitor:
         bins[-1] = np.inf
         # Ensure unique bin edges
         bins = np.unique(bins)
-        if len(bins) < 3:
-            return 0.0
+        if np.ptp(baseline) == 0 or len(bins) < 3:
+            center = float(baseline[0])
+            bins = np.array([-np.inf, center - 1e-8, center + 1e-8, np.inf])
 
         baseline_counts, _ = np.histogram(baseline, bins=bins)
         target_counts, _ = np.histogram(target, bins=bins)
@@ -101,12 +101,16 @@ class DataDriftMonitor:
             if feat in baseline_df.columns and feat in target_df.columns:
                 b_series = baseline_df[feat].dropna().values
                 t_series = target_df[feat].dropna().values
+                b_series = b_series[np.isfinite(b_series)]
+                t_series = t_series[np.isfinite(t_series)]
 
-                if len(b_series) > 0 and len(t_series) > 0:
+                if np.isfinite(b_series).sum() >= 10 and np.isfinite(t_series).sum() >= 10:
                     psi = self.calculate_psi(b_series, t_series)
                     b_mean = float(np.mean(b_series))
                     t_mean = float(np.mean(t_series))
-                    mean_change_pct = float(((t_mean - b_mean) / b_mean) * 100) if b_mean != 0 else 0.0
+                    mean_change_pct = (
+                        float(((t_mean - b_mean) / b_mean) * 100) if b_mean != 0 else 0.0
+                    )
 
                     if psi < 0.1:
                         status = "NO_DRIFT"
@@ -132,6 +136,8 @@ class DataDriftMonitor:
             overall_status = "SIGNIFICANT_DRIFT"
         elif has_moderate_drift:
             overall_status = "MODERATE_DRIFT"
+        elif not metrics:
+            overall_status = "INSUFFICIENT_DATA"
         else:
             overall_status = "STABLE"
 

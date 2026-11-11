@@ -11,7 +11,6 @@ from src.domain.models import (
     ForecastResult,
 )
 from src.domain.exceptions import DomainValidationError
-from src.adapters.gateways.trade_mapper import TradeMapper
 
 
 def test_trade_record_valid_creation():

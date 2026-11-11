@@ -11,6 +11,7 @@ from src.domain.exceptions import DomainValidationError
 @dataclass(frozen=True)
 class Commodity:
     """Represents a traded aquaculture commodity."""
+
     hs_code: float
     description: str
     category: str = "Aquaculture"
@@ -23,6 +24,7 @@ class Commodity:
 @dataclass(frozen=True)
 class Geography:
     """Represents a trading country or geographic region."""
+
     code: int
     name: str
 
@@ -34,6 +36,7 @@ class Geography:
 @dataclass
 class TradeRecord:
     """Core domain entity representing trade statistics for a commodity-geography pair at a monthly date."""
+
     date: date
     geography_code: int
     geography_desc: str
@@ -45,6 +48,10 @@ class TradeRecord:
     export_vlu: Optional[float] = None
 
     def __post_init__(self):
+        for name in ("import_qty", "import_vlu", "export_qty", "export_vlu"):
+            value = getattr(self, name)
+            if value is not None and not np.isfinite(value):
+                raise DomainValidationError(f"{name} must be finite.")
         if self.import_qty is not None and self.import_qty < 0:
             raise DomainValidationError(f"import_qty must be non-negative, got {self.import_qty}")
         if self.import_vlu is not None and self.import_vlu < 0:
@@ -56,21 +63,13 @@ class TradeRecord:
 
     def calculate_import_unit_price(self) -> Optional[float]:
         """Calculates import unit price ($ / kg or unit). Returns None if quantity is zero or missing."""
-        if (
-            self.import_qty is not None
-            and self.import_qty > 0
-            and self.import_vlu is not None
-        ):
+        if self.import_qty is not None and self.import_qty > 0 and self.import_vlu is not None:
             return float(self.import_vlu / self.import_qty)
         return None
 
     def calculate_export_unit_price(self) -> Optional[float]:
         """Calculates export unit price ($ / kg or unit). Returns None if quantity is zero or missing."""
-        if (
-            self.export_qty is not None
-            and self.export_qty > 0
-            and self.export_vlu is not None
-        ):
+        if self.export_qty is not None and self.export_qty > 0 and self.export_vlu is not None:
             return float(self.export_vlu / self.export_qty)
         return None
 
@@ -95,7 +94,8 @@ class TradeRecord:
 
 @dataclass(frozen=True)
 class ForecastPoint:
-    """Represents a single forecasted timestamp with confidence bounds."""
+    """Represents a single forecasted timestamp with heuristic uncertainty bounds."""
+
     date: date
     predicted_value: float
     lower_bound: float
@@ -110,6 +110,7 @@ class ForecastPoint:
 @dataclass
 class ModelEvaluation:
     """Holds backtest evaluation metrics for a forecasting model."""
+
     model_name: str
     mae: float
     rmse: float
@@ -125,6 +126,7 @@ class ModelEvaluation:
 @dataclass
 class ForecastResult:
     """Domain aggregate containing the complete forecasting result for a series."""
+
     series_id: str
     commodity_desc: str
     geography_desc: str
@@ -134,6 +136,7 @@ class ForecastResult:
     evaluation: ModelEvaluation
     predictions: List[ForecastPoint]
     candidate_evaluations: List[ModelEvaluation] = field(default_factory=list)
+    evaluation_protocol: Dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
     def to_dict(self) -> Dict[str, Any]:
@@ -147,6 +150,7 @@ class ForecastResult:
             "evaluation": self.evaluation.to_dict(),
             "predictions": [asdict(p) for p in self.predictions],
             "candidate_evaluations": [c.to_dict() for c in self.candidate_evaluations],
+            "evaluation_protocol": self.evaluation_protocol,
             "created_at": self.created_at,
         }
 
@@ -154,6 +158,7 @@ class ForecastResult:
 @dataclass
 class DataQualityReport:
     """Encapsulates data quality profile metrics."""
+
     total_records: int
     unique_dates: int
     min_date: date

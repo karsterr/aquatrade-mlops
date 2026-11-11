@@ -2,6 +2,10 @@
 
 import json
 import joblib
+import uuid
+import hashlib
+import re
+from src.mlops.storage import write_json
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
@@ -23,11 +27,20 @@ class ModelRegistry:
         target_metric: str,
         champion_model_name: str,
         metrics: Dict[str, float],
-        version: str = "v1.0.0",
+        version: Optional[str] = None,
         feature_columns: Optional[list] = None,
     ) -> Path:
         """Saves a model artifact and updates the registry index."""
+        version = version or f"run-{uuid.uuid4().hex}"
+        if not re.fullmatch(r"[A-Za-z0-9_.-]+", version) or version in {".", ".."}:
+            raise ValueError("Invalid model version.")
+        index = self._load_index()
+        if version in index.get(series_id, {}).get("versions", {}):
+            raise ValueError("Model version already registered; refusing overwrite.")
         clean_series_id = "".join(c if c.isalnum() or c in ("_", "-") else "_" for c in series_id)
+        clean_series_id = (
+            clean_series_id[:100] + "_" + hashlib.sha256(series_id.encode()).hexdigest()[:12]
+        )
         artifact_filename = f"model_{clean_series_id}_{version}.joblib"
         artifact_path = self.models_dir / artifact_filename
 
@@ -41,7 +54,7 @@ class ModelRegistry:
             "target_metric": target_metric,
             "champion_model_name": champion_model_name,
             "version": version,
-            "artifact_path": str(artifact_path),
+            "artifact_path": artifact_path.name,
             "metrics": metrics,
             "feature_columns": feature_columns or [],
             "registered_at": datetime.now().isoformat(),
@@ -49,14 +62,15 @@ class ModelRegistry:
 
         # Save individual metadata JSON
         meta_path = self.models_dir / f"model_{clean_series_id}_{version}.json"
-        with open(meta_path, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, indent=2)
+        write_json(meta_path, metadata)
 
         # Update global index
         self._update_index(series_id, metadata)
         return artifact_path
 
-    def load_model(self, series_id: str, version: Optional[str] = None) -> Tuple[Any, Dict[str, Any]]:
+    def load_model(
+        self, series_id: str, version: Optional[str] = None
+    ) -> Tuple[Any, Dict[str, Any]]:
         """Loads a model artifact and its metadata by series_id."""
         index = self._load_index()
         if series_id not in index:
@@ -69,6 +83,8 @@ class ModelRegistry:
 
         meta = series_entry["versions"][target_version]
         artifact_path = Path(meta["artifact_path"])
+        if not artifact_path.is_absolute():
+            artifact_path = self.models_dir / artifact_path
         if not artifact_path.exists():
             raise FileNotFoundError(f"Model artifact file missing: {artifact_path}")
 
@@ -81,11 +97,7 @@ class ModelRegistry:
 
     def _load_index(self) -> Dict[str, Any]:
         if self.registry_index_file.exists():
-            try:
-                with open(self.registry_index_file, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception:
-                return {}
+            return json.loads(self.registry_index_file.read_text(encoding="utf-8"))
         return {}
 
     def _update_index(self, series_id: str, metadata: Dict[str, Any]) -> None:
@@ -104,5 +116,4 @@ class ModelRegistry:
         index[series_id]["latest_version"] = version
         index[series_id]["versions"][version] = metadata
 
-        with open(self.registry_index_file, "w", encoding="utf-8") as f:
-            json.dump(index, f, indent=2)
+        write_json(self.registry_index_file, index)

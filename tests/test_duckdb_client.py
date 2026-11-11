@@ -1,11 +1,9 @@
 """Unit tests for DuckDBClient and DuckDBTradeRepository."""
 
-import pytest
 import pandas as pd
 from datetime import date
 
 from src.infrastructure.db.duckdb_client import DuckDBClient
-from src.infrastructure.repositories.trade_repository import DuckDBTradeRepository
 from src.domain.models import ForecastResult, ForecastPoint, ModelEvaluation
 
 
@@ -29,9 +27,7 @@ def test_repository_save_and_summary_stats(test_repository):
 
 def test_repository_get_time_series(test_repository):
     ts = test_repository.get_time_series(
-        commodity_desc="Atlantic Salmon",
-        geography_desc="World",
-        metric="export_vlu"
+        commodity_desc="Atlantic Salmon", geography_desc="World", metric="export_vlu"
     )
     assert not ts.empty
     assert "date" in ts.columns

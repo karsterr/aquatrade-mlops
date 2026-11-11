@@ -1,6 +1,5 @@
 """Central configuration for AquaTrade MLOps pipeline."""
 
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
@@ -10,8 +9,12 @@ from typing import List
 class AppConfig:
     # Root and data paths
     base_dir: Path = field(default_factory=lambda: Path(__file__).resolve().parent.parent)
-    raw_data_path: Path = field(default_factory=lambda: Path("data/raw/Aquaculture_Trade_Filtered.csv"))
-    processed_db_path: Path = field(default_factory=lambda: Path("data/processed/aquaculture.duckdb"))
+    raw_data_path: Path = field(
+        default_factory=lambda: Path("data/raw/Aquaculture_Trade_Filtered.csv")
+    )
+    processed_db_path: Path = field(
+        default_factory=lambda: Path("data/processed/aquaculture.duckdb")
+    )
     models_dir: Path = field(default_factory=lambda: Path("data/models"))
     experiments_dir: Path = field(default_factory=lambda: Path("data/experiments"))
     reports_dir: Path = field(default_factory=lambda: Path("data/reports"))
@@ -74,4 +77,3 @@ class AppConfig:
 
 # Global default configuration instance
 config = AppConfig()
-config.resolve_paths()

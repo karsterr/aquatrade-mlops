@@ -18,10 +18,7 @@ class ITradeRepository(ABC):
 
     @abstractmethod
     def get_time_series(
-        self,
-        commodity_desc: str,
-        geography_desc: str = "World",
-        metric: str = "export_vlu"
+        self, commodity_desc: str, geography_desc: str = "World", metric: str = "export_vlu"
     ) -> pd.DataFrame:
         pass
 
@@ -58,12 +55,21 @@ class DuckDBTradeRepository(ITradeRepository):
         self.client.initialize_star_schema()
 
     def get_time_series(
-        self,
-        commodity_desc: str,
-        geography_desc: str = "World",
-        metric: str = "export_vlu"
+        self, commodity_desc: str, geography_desc: str = "World", metric: str = "export_vlu"
     ) -> pd.DataFrame:
         """Retrieves a clean monthly time series for a specific commodity, geography, and metric."""
+        allowed = {
+            "import_qty",
+            "import_vlu",
+            "export_qty",
+            "export_vlu",
+            "import_unit_price",
+            "export_unit_price",
+            "trade_balance_vlu",
+            "trade_balance_qty",
+        }
+        if metric not in allowed:
+            raise ValueError(f"Unsupported metric: {metric}")
         query = f"""
             SELECT 
                 date,
@@ -78,14 +84,10 @@ class DuckDBTradeRepository(ITradeRepository):
         if not df.empty:
             df["date"] = pd.to_datetime(df["date"])
             df = df.set_index("date").sort_index()
-            # Ensure full monthly frequency (fill missing with 0 or forward fill if price)
+            # Ensure full monthly frequency (preserve missing observations for explicit validation)
             full_idx = pd.date_range(start=df.index.min(), end=df.index.max(), freq="MS")
             df = df.reindex(full_idx)
             df.index.name = "date"
-            if "price" in metric.lower():
-                df["value"] = df["value"].interpolate(method="time").ffill().bfill()
-            else:
-                df["value"] = df["value"].fillna(0.0)
             df = df.reset_index()
         return df
 
@@ -106,39 +108,43 @@ class DuckDBTradeRepository(ITradeRepository):
 
     def get_top_trading_partners(self, n: int = 10) -> pd.DataFrame:
         """Returns top N trading partner countries by trade volume in USD."""
-        query = f"SELECT * FROM v_top_trading_partners LIMIT {n};"
-        return self.client.execute_query(query)
+        query = "SELECT * FROM v_top_trading_partners LIMIT ?;"
+        return self.client.execute_query(query, [n])
 
     def save_forecasts(self, results: List[ForecastResult]) -> None:
         """Appends generated forecasts and evaluation metrics to fact_forecasts."""
         records = []
         for res in results:
             for pred in res.predictions:
-                records.append({
-                    "series_id": res.series_id,
-                    "commodity_desc": res.commodity_desc,
-                    "geography_desc": res.geography_desc,
-                    "target_metric": res.target_metric,
-                    "champion_model": res.champion_model,
-                    "horizon_months": res.horizon_months,
-                    "forecast_date": pred.date,
-                    "predicted_value": float(pred.predicted_value),
-                    "lower_bound": float(pred.lower_bound),
-                    "upper_bound": float(pred.upper_bound),
-                    "model_mae": float(res.evaluation.mae),
-                    "model_mape": float(res.evaluation.mape),
-                    "model_rmse": float(res.evaluation.rmse),
-                    "created_at": datetime.now(),
-                })
-        
+                records.append(
+                    {
+                        "series_id": res.series_id,
+                        "commodity_desc": res.commodity_desc,
+                        "geography_desc": res.geography_desc,
+                        "target_metric": res.target_metric,
+                        "champion_model": res.champion_model,
+                        "horizon_months": res.horizon_months,
+                        "forecast_date": pred.date,
+                        "predicted_value": float(pred.predicted_value),
+                        "lower_bound": float(pred.lower_bound),
+                        "upper_bound": float(pred.upper_bound),
+                        "model_mae": float(res.evaluation.mae),
+                        "model_mape": float(res.evaluation.mape),
+                        "model_rmse": float(res.evaluation.rmse),
+                        "created_at": datetime.now(),
+                    }
+                )
+
         if records:
             df_forecast = pd.DataFrame(records)
-            self.client.save_dataframe(df_forecast, "fact_forecasts", mode="overwrite")
+            self.client.save_dataframe(df_forecast, "fact_forecasts", mode="append")
 
     def get_forecasts(self, commodity_desc: Optional[str] = None) -> pd.DataFrame:
         """Retrieves stored forecast predictions."""
         if commodity_desc:
-            query = "SELECT * FROM fact_forecasts WHERE commodity_desc = ? ORDER BY forecast_date ASC"
+            query = (
+                "SELECT * FROM fact_forecasts WHERE commodity_desc = ? ORDER BY forecast_date ASC"
+            )
             return self.client.execute_query(query, [commodity_desc])
         return self.client.execute_query("SELECT * FROM fact_forecasts ORDER BY forecast_date ASC")
 

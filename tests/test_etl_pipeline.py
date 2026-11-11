@@ -2,7 +2,6 @@
 
 import pytest
 import pandas as pd
-import numpy as np
 
 from src.use_cases.etl_pipeline import ETLService
 from src.domain.exceptions import DataQualityError

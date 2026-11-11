@@ -1,0 +1,178 @@
+{
+  "purpose": "illustrative selection-validation comparison, not independent test accuracy",
+  "dataset_sha256": "007fd42b240e013280c1a336220f46b9e4ba443482c01fe738be92028b29d7f0",
+  "python": "3.12.15",
+  "pandas": "2.2.3",
+  "scikit_learn": "1.5.2",
+  "observations": 328,
+  "start": "1989-01-01T00:00:00",
+  "end": "2016-04-01T00:00:00",
+  "result": {
+    "series_id": "Pacific salmon, frozen__export_vlu__World",
+    "commodity_desc": "Pacific salmon, frozen",
+    "geography_desc": "World",
+    "target_metric": "export_vlu",
+    "champion_model": "GradientBoosting",
+    "horizon_months": 12,
+    "evaluation": {
+      "model_name": "GradientBoosting",
+      "mae": 10355200.32490664,
+      "rmse": 16750854.008963665,
+      "mape": 0.24253211189371035,
+      "wape": 0.2328395232533031,
+      "r2": 0.9026423064373849,
+      "test_samples": 24
+    },
+    "predictions": [
+      {
+        "date": "2016-05-01",
+        "predicted_value": 9167736.4,
+        "lower_bound": 0.0,
+        "upper_bound": 32382809.04
+      },
+      {
+        "date": "2016-06-01",
+        "predicted_value": 10459579.73,
+        "lower_bound": 0.0,
+        "upper_bound": 43290650.29
+      },
+      {
+        "date": "2016-07-01",
+        "predicted_value": 118569301.59,
+        "lower_bound": 78359616.29,
+        "upper_bound": 158778986.89
+      },
+      {
+        "date": "2016-08-01",
+        "predicted_value": 163092406.38,
+        "lower_bound": 116662261.11,
+        "upper_bound": 209522551.64
+      },
+      {
+        "date": "2016-09-01",
+        "predicted_value": 132900337.69,
+        "lower_bound": 80989857.18,
+        "upper_bound": 184810818.19
+      },
+      {
+        "date": "2016-10-01",
+        "predicted_value": 99543171.38,
+        "lower_bound": 42678089.09,
+        "upper_bound": 156408253.67
+      },
+      {
+        "date": "2016-11-01",
+        "predicted_value": 39850274.47,
+        "lower_bound": 0.0,
+        "upper_bound": 101271583.32
+      },
+      {
+        "date": "2016-12-01",
+        "predicted_value": 25922509.09,
+        "lower_bound": 0.0,
+        "upper_bound": 91584650.22
+      },
+      {
+        "date": "2017-01-01",
+        "predicted_value": 14841842.96,
+        "lower_bound": 0.0,
+        "upper_bound": 84487060.86
+      },
+      {
+        "date": "2017-02-01",
+        "predicted_value": 12409883.87,
+        "lower_bound": 0.0,
+        "upper_bound": 85822389.44
+      },
+      {
+        "date": "2017-03-01",
+        "predicted_value": 11262942.24,
+        "lower_bound": 0.0,
+        "upper_bound": 88258627.64
+      },
+      {
+        "date": "2017-04-01",
+        "predicted_value": 11361641.96,
+        "lower_bound": 0.0,
+        "upper_bound": 91781012.56
+      }
+    ],
+    "candidate_evaluations": [
+      {
+        "model_name": "GradientBoosting",
+        "mae": 10355200.32490664,
+        "rmse": 16750854.008963665,
+        "mape": 0.24253211189371035,
+        "wape": 0.2328395232533031,
+        "r2": 0.9026423064373849,
+        "test_samples": 24
+      },
+      {
+        "model_name": "RandomForest",
+        "mae": 12076064.534983361,
+        "rmse": 19082701.173468873,
+        "mape": 0.2606777052206081,
+        "wape": 0.271533627634287,
+        "r2": 0.8736497607571917,
+        "test_samples": 24
+      },
+      {
+        "model_name": "SeasonalNaive",
+        "mae": 12310048.916666666,
+        "rmse": 20228576.56965477,
+        "mape": 0.29963628447125984,
+        "wape": 0.27679483071780636,
+        "r2": 0.8580200506089362,
+        "test_samples": 24
+      },
+      {
+        "model_name": "RidgeRegression",
+        "mae": 14630545.526320398,
+        "rmse": 22564587.724094853,
+        "mape": 0.43656602918248755,
+        "wape": 0.32897183428606447,
+        "r2": 0.8233347324192117,
+        "test_samples": 24
+      },
+      {
+        "model_name": "LinearTrend",
+        "mae": 16498423.991219586,
+        "rmse": 23976060.030800078,
+        "mape": 0.5959629583654071,
+        "wape": 0.3709715945626634,
+        "r2": 0.800541750039354,
+        "test_samples": 24
+      },
+      {
+        "model_name": "MovingAverage",
+        "mae": 35008816.208333336,
+        "rmse": 61450454.22542187,
+        "mape": 0.678859561627528,
+        "wape": 0.7871828472506479,
+        "r2": -0.3102270594489849,
+        "test_samples": 24
+      },
+      {
+        "model_name": "Naive",
+        "mae": 36630883.375,
+        "rmse": 64565531.34021911,
+        "mape": 0.5545992531684814,
+        "wape": 0.8236554729769792,
+        "r2": -0.44643135745718454,
+        "test_samples": 24
+      }
+    ],
+    "evaluation_protocol": {
+      "strategy": "expanding-window, nonoverlapping full horizons",
+      "horizon_months": 12,
+      "origins": [
+        "2014-04-01T00:00:00",
+        "2015-04-01T00:00:00"
+      ],
+      "selection_metric": "MAE (same ranking as WAPE when defined)",
+      "score_role": "selection validation, not independent test performance",
+      "uncertainty": "uncalibrated heuristic bands"
+    },
+    "created_at": "2026-11-12T00:26:41.260785"
+  }
+}

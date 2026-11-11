@@ -1,7 +1,8 @@
 """End-to-End Pipeline Orchestrator coordinating Ingestion, ETL, Validation, DuckDB, Forecasting, and MLOps."""
 
 import time
-from pathlib import Path
+import uuid
+from src.mlops.storage import write_json
 from typing import Dict, Any, List, Optional
 import pandas as pd
 
@@ -16,6 +17,7 @@ from src.adapters.presenters.console_reporter import ConsoleReporter
 from src.mlops.tracker import ExperimentTracker
 from src.mlops.registry import ModelRegistry
 from src.mlops.monitoring import DataDriftMonitor
+from src.domain.exceptions import InsufficientDataError
 from src.domain.models import ForecastResult, DataQualityReport
 
 
@@ -52,7 +54,9 @@ class AquaTradePipeline:
         df_raw = self.loader.load_data()
         print(f"Loaded {len(df_raw):,} raw records.")
 
-        self.reporter.print_step(2, "Executing ETL transformations, metric calculations, and pivoting")
+        self.reporter.print_step(
+            2, "Executing ETL transformations, metric calculations, and pivoting"
+        )
         df_transformed = self.etl.transform(df_raw)
         print(f"Transformed into {len(df_transformed):,} monthly aggregated trade facts.")
         return df_transformed
@@ -65,7 +69,9 @@ class AquaTradePipeline:
 
     def run_persistence(self, df_transformed: pd.DataFrame) -> Dict[str, Any]:
         """Saves facts to DuckDB star schema and retrieves summary stats."""
-        self.reporter.print_step(4, f"Persisting fact_trade into DuckDB ({self.config.processed_db_path.name})")
+        self.reporter.print_step(
+            4, f"Persisting fact_trade into DuckDB ({self.config.processed_db_path.name})"
+        )
         self.repository.save_facts(df_transformed)
 
         summary_stats = self.repository.get_summary_stats()
@@ -79,7 +85,9 @@ class AquaTradePipeline:
         target_metrics: Optional[List[str]] = None,
     ) -> List[ForecastResult]:
         """Runs model tournament and generates multi-step forecasts for top commodities."""
-        self.reporter.print_step(5, f"Running Time-Series Forecasting Tournament (Top {top_n} Commodities)")
+        self.reporter.print_step(
+            5, f"Running Time-Series Forecasting Tournament (Top {top_n} Commodities)"
+        )
         top_commodities = self.repository.get_top_commodities(n=top_n)
         metrics = target_metrics or ["export_vlu", "import_vlu"]
 
@@ -90,9 +98,7 @@ class AquaTradePipeline:
                 series_id = f"{comm}__{metric}__World"
                 try:
                     ts_df = self.repository.get_time_series(
-                        commodity_desc=comm,
-                        geography_desc="World",
-                        metric=metric
+                        commodity_desc=comm, geography_desc="World", metric=metric
                     )
 
                     if len(ts_df) >= self.config.min_series_length_for_forecast:
@@ -105,6 +111,9 @@ class AquaTradePipeline:
                             geography_desc="World",
                         )
                         all_results.append(result)
+                        report_path = self.config.reports_dir / f"forecast_{uuid.uuid4().hex}.json"
+                        write_json(report_path, result.to_dict())
+                        self.tracker.log_artifact(str(report_path))
 
                         # Register model in Model Registry
                         self.registry.register_model(
@@ -114,9 +123,8 @@ class AquaTradePipeline:
                             target_metric=metric,
                             champion_model_name=result.champion_model,
                             metrics=result.evaluation.to_dict(),
-                            version="v1.0.0",
                         )
-                except Exception as e:
+                except InsufficientDataError as e:
                     print(f"Skipping {series_id}: {e}")
 
         # Persist forecasts to DuckDB
@@ -138,7 +146,9 @@ class AquaTradePipeline:
         drift_report = self.drift_monitor.evaluate_drift(baseline_df, target_df)
         print(f"Overall Data Drift Status: {drift_report.overall_status}")
         for m in drift_report.metrics:
-            print(f" - {m.feature_name:<20}: PSI={m.psi_score:<6} ({m.status}) | Baseline Mean: {m.baseline_mean:>10.2f} -> Target Mean: {m.target_mean:>10.2f} ({m.mean_change_pct:+.1f}%)")
+            print(
+                f" - {m.feature_name:<20}: PSI={m.psi_score:<6} ({m.status}) | Baseline Mean: {m.baseline_mean:>10.2f} -> Target Mean: {m.target_mean:>10.2f} ({m.mean_change_pct:+.1f}%)"
+            )
         return drift_report
 
     def run_autopilot(self) -> Dict[str, Any]:
@@ -148,7 +158,7 @@ class AquaTradePipeline:
 
         run_id = self.tracker.start_run(
             experiment_name="Aquaculture_Trade_Full_Pipeline",
-            tags={"mode": "autopilot", "version": "1.0.0"}
+            tags={"mode": "autopilot", "version": "1.0.0"},
         )
         self.tracker.log_param("forecast_horizon", self.config.default_forecast_horizon)
         self.tracker.log_param("top_n_commodities", self.config.default_top_n_commodities)
@@ -173,7 +183,9 @@ class AquaTradePipeline:
                 target_metrics=["export_vlu", "import_vlu"],
             )
             if forecast_results:
-                avg_mape = float(sum(r.evaluation.mape for r in forecast_results) / len(forecast_results))
+                avg_mape = float(
+                    sum(r.evaluation.mape for r in forecast_results) / len(forecast_results)
+                )
                 self.tracker.log_metric("avg_champion_mape", avg_mape)
                 self.tracker.log_metric("total_forecasted_series", len(forecast_results))
 
@@ -184,9 +196,11 @@ class AquaTradePipeline:
             elapsed_sec = round(time.time() - start_time, 2)
             self.tracker.log_metric("pipeline_runtime_sec", elapsed_sec)
 
-            completed_run = self.tracker.end_run(status="SUCCESS")
+            self.tracker.end_run(status="SUCCESS")
 
-            self.reporter.print_banner(f"Pipeline Completed Successfully in {elapsed_sec}s | Run ID: {run_id}")
+            self.reporter.print_banner(
+                f"Pipeline Completed Successfully in {elapsed_sec}s | Run ID: {run_id}"
+            )
 
             return {
                 "run_id": run_id,

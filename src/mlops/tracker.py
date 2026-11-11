@@ -1,6 +1,7 @@
 """MLOps Experiment Tracker for pipeline and model training runs."""
 
 import json
+from src.mlops.storage import write_json
 import uuid
 import hashlib
 from datetime import datetime
@@ -20,6 +21,8 @@ class ExperimentTracker:
 
     def start_run(self, experiment_name: str, tags: Optional[Dict[str, str]] = None) -> str:
         """Starts a new experiment run session."""
+        if self._current_run is not None:
+            raise RuntimeError("A run is already active.")
         run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
         self._current_run = {
             "run_id": run_id,
@@ -33,6 +36,7 @@ class ExperimentTracker:
             "dataset_info": {},
             "artifacts": [],
         }
+        write_json(self.experiments_dir / f"{run_id}.json", self._current_run)
         return run_id
 
     def log_param(self, key: str, value: Any) -> None:
@@ -59,13 +63,13 @@ class ExperimentTracker:
     def log_dataset_metadata(self, df: pd.DataFrame, name: str = "dataset") -> None:
         """Computes and logs dataset size and hash for data versioning."""
         if self._current_run:
-            sample_bytes = df.head(100).to_csv(index=False).encode("utf-8")
-            data_hash = hashlib.md5(sample_bytes).hexdigest()
+            sample_bytes = df.to_csv(index=False).encode("utf-8")
+            data_hash = hashlib.sha256(sample_bytes).hexdigest()
             self._current_run["dataset_info"] = {
                 "name": name,
                 "shape": list(df.shape),
                 "columns": df.columns.tolist(),
-                "sample_hash": data_hash,
+                "content_sha256": data_hash,
             }
 
     def log_artifact(self, artifact_path: str) -> None:
@@ -90,37 +94,29 @@ class ExperimentTracker:
         """Appends run data to global runs.json and individual run file."""
         # Individual run JSON
         run_file = self.experiments_dir / f"{run_data['run_id']}.json"
-        with open(run_file, "w", encoding="utf-8") as f:
-            json.dump(run_data, f, indent=2)
+        write_json(run_file, run_data)
 
         # Global runs list
         all_runs = []
         if self.runs_file.exists():
-            try:
-                with open(self.runs_file, "r", encoding="utf-8") as f:
-                    all_runs = json.load(f)
-            except Exception:
-                all_runs = []
+            all_runs = json.loads(self.runs_file.read_text(encoding="utf-8"))
 
-        all_runs.append({
-            "run_id": run_data["run_id"],
-            "experiment_name": run_data["experiment_name"],
-            "start_time": run_data["start_time"],
-            "end_time": run_data["end_time"],
-            "status": run_data["status"],
-            "metrics": run_data["metrics"],
-            "parameters": run_data["parameters"],
-        })
+        all_runs.append(
+            {
+                "run_id": run_data["run_id"],
+                "experiment_name": run_data["experiment_name"],
+                "start_time": run_data["start_time"],
+                "end_time": run_data["end_time"],
+                "status": run_data["status"],
+                "metrics": run_data["metrics"],
+                "parameters": run_data["parameters"],
+            }
+        )
 
-        with open(self.runs_file, "w", encoding="utf-8") as f:
-            json.dump(all_runs, f, indent=2)
+        write_json(self.runs_file, all_runs)
 
     def get_runs(self) -> List[Dict[str, Any]]:
         """Reads all recorded experiment runs."""
         if self.runs_file.exists():
-            try:
-                with open(self.runs_file, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception:
-                return []
+            return json.loads(self.runs_file.read_text(encoding="utf-8"))
         return []

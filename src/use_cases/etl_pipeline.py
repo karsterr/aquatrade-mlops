@@ -15,6 +15,10 @@ class ETLService:
         DataValidator.validate_raw_schema(df)
 
         df_clean = df.copy()
+        amounts = pd.to_numeric(df_clean["AMOUNT"], errors="raise")
+        if (amounts < 0).any() or np.isinf(amounts).any():
+            raise DataQualityError("Raw trade amounts must be finite and nonnegative.")
+        df_clean["AMOUNT"] = amounts
 
         # Build ISO monthly date from YEAR_ID and TIMEPERIOD_ID
         year_str = df_clean["YEAR_ID"].astype(str)
@@ -34,13 +38,12 @@ class ETLService:
             "COMMODITY_DESC",
         ]
 
-        df_pivot = pd.pivot_table(
-            df_clean,
-            index=index_cols,
-            columns="ATTRIBUTE_DESC",
-            values="AMOUNT",
-            aggfunc="sum",
-        ).reset_index()
+        df_pivot = (
+            df_clean.groupby(index_cols + ["ATTRIBUTE_DESC"], dropna=False)["AMOUNT"]
+            .sum(min_count=1)
+            .unstack("ATTRIBUTE_DESC")
+            .reset_index()
+        )
 
         df_pivot.columns.name = None
 
@@ -58,20 +61,31 @@ class ETLService:
             if col not in df_pivot.columns:
                 df_pivot[col] = np.nan
 
+        # Reject invalid raw measurements rather than silently clipping them.
+        base = ["import_qty", "import_vlu", "export_qty", "export_vlu"]
+        if (df_pivot[base] < 0).any().any() or np.isinf(df_pivot[base]).any().any():
+            raise DataQualityError("Trade values and quantities must be finite and nonnegative.")
+
         # Calculate unit prices ($ / unit)
-        df_pivot["import_unit_price"] = df_pivot["import_vlu"] / df_pivot["import_qty"].replace({0: np.nan})
-        df_pivot["export_unit_price"] = df_pivot["export_vlu"] / df_pivot["export_qty"].replace({0: np.nan})
+        df_pivot["import_unit_price"] = df_pivot["import_vlu"] / df_pivot["import_qty"].replace(
+            {0: np.nan}
+        )
+        df_pivot["export_unit_price"] = df_pivot["export_vlu"] / df_pivot["export_qty"].replace(
+            {0: np.nan}
+        )
 
         # Calculate trade balances
-        df_pivot["trade_balance_vlu"] = df_pivot["export_vlu"].fillna(0) - df_pivot["import_vlu"].fillna(0)
-        df_pivot["trade_balance_qty"] = df_pivot["export_qty"].fillna(0) - df_pivot["import_qty"].fillna(0)
-
-        # Enforce non-negative invariants on base quantities & values
-        for col in ["import_qty", "import_vlu", "export_qty", "export_vlu"]:
-            df_pivot[col] = df_pivot[col].apply(lambda x: max(0.0, x) if pd.notna(x) else np.nan)
+        df_pivot["trade_balance_vlu"] = df_pivot["export_vlu"].fillna(0) - df_pivot[
+            "import_vlu"
+        ].fillna(0)
+        df_pivot["trade_balance_qty"] = df_pivot["export_qty"].fillna(0) - df_pivot[
+            "import_qty"
+        ].fillna(0)
 
         # Sort chronologically and by commodity
-        df_pivot = df_pivot.sort_values(by=["date", "COMMODITY_DESC", "GEOGRAPHY_DESC"]).reset_index(drop=True)
+        df_pivot = df_pivot.sort_values(
+            by=["date", "COMMODITY_DESC", "GEOGRAPHY_DESC"]
+        ).reset_index(drop=True)
 
         DataValidator.validate_transformed_schema(df_pivot)
         return df_pivot

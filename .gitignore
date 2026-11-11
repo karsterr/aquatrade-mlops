@@ -19,3 +19,11 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+.venv/
+.venv-audit/
+.ruff_cache/
+data/reports/
+data/models/*.json
+data/experiments/*.json
+*.tmp

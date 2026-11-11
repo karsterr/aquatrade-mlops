@@ -38,4 +38,6 @@ class CSVDataLoader:
             )
             return df
         except Exception as e:
-            raise DataQualityError(f"Failed to parse CSV trade dataset at '{self.file_path}': {e}") from e
+            raise DataQualityError(
+                f"Failed to parse CSV trade dataset at '{self.file_path}': {e}"
+            ) from e

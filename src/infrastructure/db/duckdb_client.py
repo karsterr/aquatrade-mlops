@@ -1,7 +1,8 @@
 """DuckDB analytical database client and schema manager."""
 
 from pathlib import Path
-from typing import Optional, Union, List, Dict, Any
+import re
+from typing import Optional, Union, List, Any
 import duckdb
 import pandas as pd
 
@@ -43,23 +44,22 @@ class DuckDBClient:
             except Exception as e:
                 raise RepositoryError(f"Statement execution failed: {sql} | Error: {e}") from e
 
-    def save_dataframe(
-        self,
-        df: pd.DataFrame,
-        table_name: str,
-        mode: str = "overwrite"
-    ) -> None:
+    def save_dataframe(self, df: pd.DataFrame, table_name: str, mode: str = "overwrite") -> None:
         """Saves a pandas DataFrame to DuckDB table."""
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", table_name):
+            raise ValueError("Invalid SQL table identifier.")
         with self.get_connection() as conn:
             try:
                 if mode == "overwrite":
-                    conn.execute(f"DROP TABLE IF EXISTS {table_name}")
-                    conn.execute(f"CREATE TABLE {table_name} AS SELECT * FROM df")
+                    conn.execute(f"CREATE OR REPLACE TABLE {table_name} AS SELECT * FROM df")
                 elif mode == "append":
                     # Check if table exists
-                    table_exists = conn.execute(
-                        f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
-                    ).fetchone()[0] > 0
+                    table_exists = (
+                        conn.execute(
+                            f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
+                        ).fetchone()[0]
+                        > 0
+                    )
 
                     if table_exists:
                         conn.execute(f"INSERT INTO {table_name} SELECT * FROM df")
@@ -68,7 +68,9 @@ class DuckDBClient:
                 else:
                     raise ValueError(f"Unsupported mode: {mode}. Use 'overwrite' or 'append'.")
             except Exception as e:
-                raise RepositoryError(f"Failed to save DataFrame into table '{table_name}': {e}") from e
+                raise RepositoryError(
+                    f"Failed to save DataFrame into table '{table_name}': {e}"
+                ) from e
 
     def initialize_star_schema(self) -> None:
         """Builds dimensional views and summary aggregates if fact_trade exists."""
@@ -150,4 +152,6 @@ class DuckDBClient:
                     );
                 """)
             except Exception as e:
-                raise RepositoryError(f"Failed to initialize star schema & analytical views: {e}") from e
+                raise RepositoryError(
+                    f"Failed to initialize star schema & analytical views: {e}"
+                ) from e

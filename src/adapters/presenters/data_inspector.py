@@ -1,7 +1,6 @@
 """Data inspection and statistical profiling presenter."""
 
 import pandas as pd
-from typing import Dict, Any
 
 from src.domain.validation import DataValidator
 from src.domain.models import DataQualityReport
