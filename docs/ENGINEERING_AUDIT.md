@@ -80,7 +80,10 @@ git diff --check
 
 Final local result: **57 passed, 0 failed, 0 skipped, 0 errors** on Python 3.12.15.
 Ruff lint, format checks and `git diff --check` passed.
-Remote test CI has not yet been run on this branch at the time of this report.
+GitHub Actions `test` completed successfully on commit `12e0598`:
+https://github.com/karsterr/aquatrade-mlops/actions/runs/43105037538 .
+An external Sourcery review was still pending when checked; it is separate from
+the repository pytest/Ruff job. Later documentation-only commits may trigger new runs.
 Tests use synthetic fixtures and temporary artifact storage. A real-data full-pipeline
 smoke run used a temporary base directory and did not modify tracked lifecycle stores.
 It loaded all 283,178 raw rows and persisted 125,453 facts, then **failed explicitly**
@@ -148,6 +151,18 @@ Relevant topics: python, machine-learning, mlops, time-series-forecasting, duckd
 data-engineering, aquaculture, pandas, scikit-learn. The description was applied and machine-learning/mlops topics were added; existing
 topics were preserved. Git commit, push, PR and CI outcomes are reported with the
 review handoff.
+
+Pushed branch: `improvement/mlops-quality-audit`.
+Pull request: https://github.com/karsterr/aquatrade-mlops/pull/1 (base: main; unmerged).
+
+Implementation commits:
+
+- `0699b07` — recursive evaluation, ETL and lifecycle reliability with regression tests.
+- `a14e757` — pinned dependencies and pytest/Ruff CI.
+- `12e0598` — README, data documentation, audit and measured benchmark.
+
+The final documentation-only commit records the verified remote validation and PR.
+No remaining push or PR creation steps are required.
 
 ## I. Next cycle
 
