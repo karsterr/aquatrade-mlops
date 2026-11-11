@@ -1,8 +1,7 @@
 """Domain validation rules and schema verification for AquaTrade datasets."""
 
-from typing import List, Tuple
+from typing import List
 import pandas as pd
-import numpy as np
 
 from src.domain.models import DataQualityReport
 from src.domain.exceptions import DataQualityError
@@ -12,6 +11,7 @@ class DataValidator:
     """Validates raw and transformed trade datasets against business rules."""
 
     REQUIRED_RAW_COLUMNS = [
+        "HS_CODE",
         "YEAR_ID",
         "TIMEPERIOD_ID",
         "GEOGRAPHY_CODE",
@@ -108,7 +108,9 @@ class DataValidator:
                     outliers = int((series > upper_bound).sum())
                     outlier_count += outliers
                     if outliers > 0:
-                        warnings.append(f"Detected {outliers} extreme outliers in {price_col} (> ${upper_bound:.2f}/unit).")
+                        warnings.append(
+                            f"Detected {outliers} extreme outliers in {price_col} (> ${upper_bound:.2f}/unit)."
+                        )
 
         is_valid = (negative_count == 0) and (total_records > 0)
 

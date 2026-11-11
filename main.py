@@ -1,14 +1,19 @@
 """AquaTrade MLOps - Main Execution Entrypoint and CLI."""
 
 import argparse
-import sys
-import json
 from pathlib import Path
 
 from src.config import config, AppConfig
 from src.use_cases.pipeline_orchestrator import AquaTradePipeline
 from src.mlops.registry import ModelRegistry
 from src.mlops.tracker import ExperimentTracker
+
+
+def positive_int(value):
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be a positive integer")
+    return number
 
 
 def parse_args():
@@ -24,13 +29,13 @@ def parse_args():
     )
     parser.add_argument(
         "--top-n",
-        type=int,
+        type=positive_int,
         default=config.default_top_n_commodities,
         help="Number of top commodities to model and forecast (default: 5)",
     )
     parser.add_argument(
         "--horizon",
-        type=int,
+        type=positive_int,
         default=config.default_forecast_horizon,
         help="Forecasting horizon in months (default: 12)",
     )
@@ -115,7 +120,9 @@ def main():
             print("No experiment runs found.")
         else:
             for r in runs:
-                print(f"Run ID: {r.get('run_id')} | Status: {r.get('status')} | Start: {r.get('start_time')}")
+                print(
+                    f"Run ID: {r.get('run_id')} | Status: {r.get('status')} | Start: {r.get('start_time')}"
+                )
                 print(f" - Experiment: {r.get('experiment_name')}")
                 print(f" - Metrics: {r.get('metrics')}")
                 print("-" * 60)

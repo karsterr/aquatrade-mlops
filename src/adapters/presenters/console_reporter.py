@@ -1,7 +1,6 @@
 """Console reporting and visualization presenter for pipeline, forecasting, and MLOps metrics."""
 
-from typing import List, Dict, Any, Optional
-import pandas as pd
+from typing import List, Dict, Any
 from src.domain.models import ForecastResult
 
 
@@ -30,7 +29,11 @@ class ConsoleReporter:
         print("-" * 85)
 
         for res in results:
-            short_comm = (res.commodity_desc[:29] + "...") if len(res.commodity_desc) > 32 else res.commodity_desc
+            short_comm = (
+                (res.commodity_desc[:29] + "...")
+                if len(res.commodity_desc) > 32
+                else res.commodity_desc
+            )
             eval_m = res.evaluation
             print(
                 f"{short_comm:<32} "
@@ -45,14 +48,20 @@ class ConsoleReporter:
 
     @staticmethod
     def print_forecast_table(res: ForecastResult, limit: int = 12) -> None:
-        """Prints multi-step forecasts with confidence intervals for a single series."""
+        """Prints multi-step forecasts with heuristic uncertainty bounds for a single series."""
         print(f"\n[FORECAST] Multi-Month Horizon: '{res.commodity_desc}' ({res.target_metric})")
-        print(f"   Model: {res.champion_model} | Backtest MAE: {res.evaluation.mae:.2f} | MAPE: {res.evaluation.mape*100:.1f}%")
-        print(f"   {'Month':<12} {'Forecast Value':>18} {'Lower 95% CI':>18} {'Upper 95% CI':>18}")
+        print(
+            f"   Model: {res.champion_model} | Backtest MAE: {res.evaluation.mae:.2f} | MAPE: {res.evaluation.mape*100:.1f}%"
+        )
+        print(
+            f"   {'Month':<12} {'Forecast Value':>18} {'Lower heuristic':>18} {'Upper heuristic':>18}"
+        )
         print("   " + "-" * 70)
         for point in res.predictions[:limit]:
             month_str = point.date.strftime("%Y-%m")
-            print(f"   {month_str:<12} {point.predicted_value:>18,.2f} {point.lower_bound:>18,.2f} {point.upper_bound:>18,.2f}")
+            print(
+                f"   {month_str:<12} {point.predicted_value:>18,.2f} {point.lower_bound:>18,.2f} {point.upper_bound:>18,.2f}"
+            )
         print()
 
     @staticmethod

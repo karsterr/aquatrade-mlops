@@ -1,13 +1,16 @@
 """ML-based time-series forecasting service with automated model selection and backtesting."""
 
-from datetime import date, datetime
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any, Tuple
 import numpy as np
 import pandas as pd
-from dateutil.relativedelta import relativedelta
 
 from sklearn.linear_model import Ridge, LinearRegression
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.base import clone
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from statistics import NormalDist
+
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from src.domain.models import ForecastPoint, ModelEvaluation, ForecastResult
@@ -20,8 +23,8 @@ class FeatureEngineer:
     @staticmethod
     def create_features(
         series: pd.Series,
-        lags: List[int] = [1, 2, 3, 6, 12],
-        rolling_windows: List[int] = [3, 6, 12]
+        lags: Tuple[int, ...] = (1, 2, 3, 6, 12),
+        rolling_windows: Tuple[int, ...] = (3, 6, 12),
     ) -> pd.DataFrame:
         df = pd.DataFrame({"target": series.values}, index=series.index)
 
@@ -41,7 +44,9 @@ class FeatureEngineer:
         # Rolling Window Statistics
         for w in rolling_windows:
             df[f"rolling_mean_{w}"] = df["target"].shift(1).rolling(window=w, min_periods=1).mean()
-            df[f"rolling_std_{w}"] = df["target"].shift(1).rolling(window=w, min_periods=1).std().fillna(0)
+            df[f"rolling_std_{w}"] = (
+                df["target"].shift(1).rolling(window=w, min_periods=1).std().fillna(0)
+            )
             df[f"rolling_min_{w}"] = df["target"].shift(1).rolling(window=w, min_periods=1).min()
             df[f"rolling_max_{w}"] = df["target"].shift(1).rolling(window=w, min_periods=1).max()
 
@@ -57,6 +62,8 @@ class ForecastService:
         min_series_length: int = 36,
         confidence_level: float = 0.95,
     ):
+        if test_split_months < 1 or min_series_length < 1 or not 0 < confidence_level < 1:
+            raise ValueError("Invalid evaluation configuration.")
         self.test_split_months = test_split_months
         self.min_series_length = min_series_length
         self.confidence_level = confidence_level
@@ -65,47 +72,57 @@ class ForecastService:
         """Returns initialized candidate forecasting estimators."""
         return {
             "LinearTrend": LinearRegression(),
-            "RidgeRegression": Ridge(alpha=1.0, random_state=42),
+            "RidgeRegression": make_pipeline(StandardScaler(), Ridge(alpha=1.0, random_state=42)),
             "RandomForest": RandomForestRegressor(n_estimators=60, max_depth=6, random_state=42),
-            "GradientBoosting": GradientBoostingRegressor(n_estimators=50, max_depth=4, random_state=42),
+            "GradientBoosting": GradientBoostingRegressor(
+                n_estimators=50, max_depth=4, random_state=42
+            ),
         }
 
-    def _calculate_metrics(self, y_true: np.ndarray, y_pred: np.ndarray, model_name: str) -> ModelEvaluation:
+    def _calculate_metrics(
+        self, y_true: np.ndarray, y_pred: np.ndarray, model_name: str
+    ) -> ModelEvaluation:
         """Calculates standard regression and percentage metrics."""
         y_true = np.asarray(y_true, dtype=float)
         y_pred = np.asarray(y_pred, dtype=float)
-        # Clip negative predictions for trade facts
-        y_pred = np.clip(y_pred, a_min=0.0, a_max=None)
-
+        if y_true.shape != y_pred.shape or not y_true.size:
+            raise ValueError("Metrics require matching nonempty arrays.")
+        if not np.isfinite(y_true).all() or not np.isfinite(y_pred).all():
+            raise ValueError("Metrics require finite observations and predictions.")
         mae = float(mean_absolute_error(y_true, y_pred))
         rmse = float(np.sqrt(mean_squared_error(y_true, y_pred)))
+        denominator = float(np.abs(y_true).sum())
+        # Undefined percentages are explicit NaN, never epsilon-adjusted scores.
+        wape = float(np.abs(y_true - y_pred).sum() / denominator) if denominator else float("nan")
+        nonzero = y_true != 0
+        mape = (
+            float(np.mean(np.abs((y_true[nonzero] - y_pred[nonzero]) / y_true[nonzero])))
+            if nonzero.any()
+            else float("nan")
+        )
+        r2 = (
+            float(r2_score(y_true, y_pred))
+            if len(y_true) > 1 and np.var(y_true) > 0
+            else float("nan")
+        )
 
-        # WAPE (Weighted Absolute Percentage Error)
-        sum_true = float(np.sum(np.abs(y_true)))
-        wape = float(np.sum(np.abs(y_true - y_pred)) / (sum_true + 1e-8))
-
-        # MAPE
-        epsilon = 1.0 if np.mean(y_true) > 100 else 0.01
-        mape = float(np.mean(np.abs((y_true - y_pred) / (y_true + epsilon))))
-
-        # R2
-        r2 = float(r2_score(y_true, y_pred)) if len(y_true) > 1 and np.var(y_true) > 0 else 0.0
+        if not np.isfinite([mae, rmse]).all():
+            raise ValueError(
+                "Metric arithmetic overflowed; rescale target units before evaluation."
+            )
 
         return ModelEvaluation(
             model_name=model_name,
-            mae=round(mae, 3),
-            rmse=round(rmse, 3),
-            mape=round(mape, 4),
-            wape=round(wape, 4),
-            r2=round(r2, 4),
+            mae=mae,
+            rmse=rmse,
+            mape=mape,
+            wape=wape,
+            r2=r2,
             test_samples=len(y_true),
         )
 
     def _forecast_baseline(
-        self,
-        train_series: pd.Series,
-        horizon: int,
-        strategy: str = "Naive"
+        self, train_series: pd.Series, horizon: int, strategy: str = "Naive"
     ) -> np.ndarray:
         """Generates baseline benchmark forecasts."""
         vals = train_series.values
@@ -125,6 +142,28 @@ class ForecastService:
             return np.full(horizon, float(np.mean(vals[-k:])))
         return np.full(horizon, vals[-1])
 
+    @staticmethod
+    def _fit(estimator, history):
+        features = FeatureEngineer.create_features(history).dropna()
+        model = clone(estimator)
+        model.fit(features.drop(columns="target"), features["target"])
+        return model
+
+    @staticmethod
+    def _recursive_forecast(model, history, horizon):
+        extended = history.copy()
+        predictions = []
+        for _ in range(horizon):
+            extended.loc[extended.index[-1] + pd.offsets.MonthBegin(1)] = np.nan
+            features = FeatureEngineer.create_features(extended).drop(columns="target").iloc[-1:]
+            value = float(model.predict(features)[0])
+            if not np.isfinite(value):
+                raise ValueError("Model produced a nonfinite forecast.")
+            value = max(0.0, value)
+            extended.iloc[-1] = value
+            predictions.append(value)
+        return np.asarray(predictions)
+
     def run_tournament(
         self,
         time_series_df: pd.DataFrame,
@@ -135,109 +174,79 @@ class ForecastService:
         geography_desc: str = "World",
     ) -> Tuple[ForecastResult, Any]:
         """Conducts a model tournament over backtest split and generates future forecasts."""
-        if time_series_df.empty or len(time_series_df) < self.min_series_length:
+        if not isinstance(horizon_months, int) or horizon_months < 1:
+            raise ValueError("horizon_months must be a positive integer.")
+        if self.test_split_months < horizon_months:
             raise InsufficientDataError(
-                f"Series '{series_id}' has {len(time_series_df)} points, minimum required is {self.min_series_length}."
+                "Evaluation window must contain at least one full forecast horizon."
             )
-
         ts = time_series_df.copy()
-        ts["date"] = pd.to_datetime(ts["date"])
+        ts["date"] = pd.to_datetime(ts["date"], errors="raise")
+        if ts["date"].isna().any() or not ts["date"].dt.is_month_start.all():
+            raise ValueError("Dates must be valid month starts.")
         ts = ts.sort_values("date").set_index("date")
         target_series = ts["value"].astype(float)
-
-        # Train / Test Split for Backtesting
-        split_point = len(target_series) - self.test_split_months
-        if split_point < 12:
-            split_point = int(len(target_series) * 0.8)
-
-        train_s = target_series.iloc[:split_point]
-        test_s = target_series.iloc[split_point:]
-        test_h = len(test_s)
-
-        candidate_evals: List[ModelEvaluation] = []
+        expected = pd.date_range(ts.index.min(), ts.index.max(), freq="MS") if len(ts) else []
+        if ts.index.has_duplicates or not ts.index.equals(pd.DatetimeIndex(expected)):
+            raise ValueError(
+                "Series must have unique, consecutive monthly observations; missing months are not zeros."
+            )
+        if not np.isfinite(target_series).all() or (target_series < 0).any():
+            raise ValueError(
+                "Targets must be finite and nonnegative; missing values require an explicit data policy."
+            )
+        if len(ts) < self.min_series_length:
+            raise InsufficientDataError(
+                f"Series '{series_id}' has {len(ts)} points, minimum is {self.min_series_length}."
+            )
+        # Right-aligned, nonoverlapping full horizons; never shorten the requested horizon.
+        blocks = min(self.test_split_months // horizon_months, (len(ts) - 12) // horizon_months)
+        if blocks < 1:
+            raise InsufficientDataError(
+                "Need at least 12 training months and one full evaluation horizon."
+            )
+        origins = list(range(len(ts) - blocks * horizon_months, len(ts), horizon_months))
         candidate_models = self._get_candidate_models()
-
-        # 1. Evaluate Baselines
-        for b_name in ["Naive", "SeasonalNaive", "MovingAverage"]:
-            preds = self._forecast_baseline(train_s, test_h, strategy=b_name)
-            eval_res = self._calculate_metrics(test_s.values, preds, b_name)
-            candidate_evals.append(eval_res)
-
-        # 2. Evaluate ML Regressors
-        feat_df = FeatureEngineer.create_features(target_series)
-        feat_cols = [c for c in feat_df.columns if c != "target"]
-
-        # Drop warm-up rows with NaNs in feature space
-        valid_mask = ~feat_df[feat_cols].isna().any(axis=1)
-        valid_feat_df = feat_df[valid_mask]
-
-        # Train split in feature space
-        train_feat = valid_feat_df.loc[valid_feat_df.index.isin(train_s.index)]
-        test_feat = valid_feat_df.loc[valid_feat_df.index.isin(test_s.index)]
-
-        fitted_ml_models: Dict[str, Any] = {}
-
-        if len(train_feat) > 10 and len(test_feat) > 0:
-            X_train = train_feat[feat_cols]
-            y_train = train_feat["target"]
-            X_test = test_feat[feat_cols]
-            y_test = test_feat["target"]
-
-            for m_name, estimator in candidate_models.items():
+        baselines = ["Naive", "SeasonalNaive", "MovingAverage"]
+        names = baselines + (list(candidate_models) if origins[0] - 12 > 10 else [])
+        actuals = np.concatenate(
+            [target_series.iloc[o : o + horizon_months].values for o in origins]
+        )
+        candidate_evals = []
+        for name in names:
+            predictions = []
+            for origin in origins:
+                history = target_series.iloc[:origin]
                 try:
-                    estimator.fit(X_train, y_train)
-                    y_pred = estimator.predict(X_test)
-                    eval_res = self._calculate_metrics(y_test.values, y_pred, m_name)
-                    candidate_evals.append(eval_res)
-                    fitted_ml_models[m_name] = estimator
-                except Exception:
-                    continue
-
-        # 3. Select Champion Model (Lowest WAPE, tiebreaker lowest MAE)
-        candidate_evals.sort(key=lambda x: (x.wape, x.mae))
+                    if name in baselines:
+                        pred = self._forecast_baseline(history, horizon_months, name)
+                    else:
+                        model = self._fit(candidate_models[name], history)
+                        pred = self._recursive_forecast(model, history, horizon_months)
+                    predictions.extend(pred)
+                except Exception as exc:
+                    raise ModelTrainingError(
+                        f"Candidate {name} failed at origin {history.index[-1]}."
+                    ) from exc
+            candidate_evals.append(self._calculate_metrics(actuals, np.asarray(predictions), name))
+        # WAPE and MAE give identical rankings within a series; MAE also handles all-zero targets.
+        candidate_evals.sort(key=lambda evaluation: evaluation.mae)
         champion_eval = candidate_evals[0]
         champion_name = champion_eval.model_name
-
-        # 4. Generate Future Forecasts (Refit on full dataset)
-        future_dates = [
-            target_series.index.max().date() + relativedelta(months=i)
-            for i in range(1, horizon_months + 1)
-        ]
-
-        future_preds: np.ndarray
-        champion_model_obj: Any = None
-
-        if champion_name in ["Naive", "SeasonalNaive", "MovingAverage"]:
-            future_preds = self._forecast_baseline(target_series, horizon_months, strategy=champion_name)
+        future_dates = pd.date_range(
+            target_series.index[-1] + pd.offsets.MonthBegin(1), periods=horizon_months, freq="MS"
+        ).date
+        if champion_name in baselines:
+            future_preds = self._forecast_baseline(target_series, horizon_months, champion_name)
             champion_model_obj = {"type": "baseline", "strategy": champion_name}
         else:
-            # Full ML fit
-            X_full = valid_feat_df[feat_cols]
-            y_full = valid_feat_df["target"]
-            model_class = candidate_models[champion_name]
-            model_class.fit(X_full, y_full)
-            champion_model_obj = model_class
+            champion_model_obj = self._fit(candidate_models[champion_name], target_series)
+            future_preds = self._recursive_forecast(
+                champion_model_obj, target_series, horizon_months
+            )
 
-            # Recursive Multi-Step Forecasting
-            future_preds = []
-            extended_series = target_series.copy()
-
-            for future_d in future_dates:
-                # Append next placeholder
-                extended_series[pd.to_datetime(future_d)] = extended_series.iloc[-1]
-                # Re-generate features for the last point
-                temp_feat = FeatureEngineer.create_features(extended_series)
-                last_row = temp_feat[feat_cols].iloc[-1:]
-                next_pred = float(model_class.predict(last_row)[0])
-                next_pred = max(0.0, next_pred)
-                # Overwrite placeholder with predicted value
-                extended_series.iloc[-1] = next_pred
-                future_preds.append(next_pred)
-
-            future_preds = np.array(future_preds)
-
-        # 5. Compute Prediction Intervals (95% CI based on backtest RMSE & horizon scale)
-        z = 1.96 if self.confidence_level == 0.95 else 1.645
+        # Heuristic uncertainty bands: nominal multiplier is not calibrated coverage.
+        z = NormalDist().inv_cdf((1 + self.confidence_level) / 2)
         forecast_points: List[ForecastPoint] = []
         base_sigma = max(champion_eval.rmse, champion_eval.mae * 1.25, 0.1)
 
@@ -266,6 +275,14 @@ class ForecastService:
             evaluation=champion_eval,
             predictions=forecast_points,
             candidate_evaluations=candidate_evals,
+            evaluation_protocol={
+                "strategy": "expanding-window, nonoverlapping full horizons",
+                "horizon_months": horizon_months,
+                "origins": [target_series.index[o - 1].isoformat() for o in origins],
+                "selection_metric": "MAE (same ranking as WAPE when defined)",
+                "score_role": "selection validation, not independent test performance",
+                "uncertainty": "uncalibrated heuristic bands",
+            },
         )
 
         return result, champion_model_obj

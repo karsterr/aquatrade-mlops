@@ -2,7 +2,6 @@
 
 import pytest
 import pandas as pd
-import numpy as np
 
 from src.use_cases.forecast_service import FeatureEngineer, ForecastService
 from src.domain.exceptions import InsufficientDataError
@@ -49,10 +48,12 @@ def test_forecast_service_tournament(synthetic_time_series):
 
 def test_forecast_service_insufficient_data():
     forecaster = ForecastService(min_series_length=36)
-    short_df = pd.DataFrame({
-        "date": pd.date_range("2020-01-01", periods=10, freq="MS"),
-        "value": [10.0] * 10,
-    })
+    short_df = pd.DataFrame(
+        {
+            "date": pd.date_range("2020-01-01", periods=10, freq="MS"),
+            "value": [10.0] * 10,
+        }
+    )
     with pytest.raises(InsufficientDataError):
         forecaster.run_tournament(
             time_series_df=short_df,
